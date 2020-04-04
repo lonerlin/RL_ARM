@@ -102,7 +102,7 @@ float step(int action){
       //求动作后距离的变化，以变化值作为回报，向前正回报，向后负回报。
       dist = get_distance();
       diff = dist - pre_dist;
-      if(abs(diff)<0.5){diff=0;}             //减少误差到底有没有必有呢？
+      if(abs(diff)<10){diff=0;}             //减少误差到底有没有必有呢？
       pre_dist = dist;
       reward = map(diff,-4,4,-10,10);
 
@@ -139,10 +139,10 @@ void train(){
       Serial.print(" s2_angle=");Serial.println(s2_angle);
       Serial.print(" reward=");Serial.println(reward);
 
-      //根据Q_learning公式，更新Q_table
+      //根据Q_learning公式，更新Q_table并转移到下一个转台
       Q_table[state][action] += alpha * (reward + gamma * calc_max_Q(next_state) - Q_table[state][action] );
-      
-      if(reward != 0)over = true; //如果前进或者后退了，其实这一幕探索可以结束了，不用等到最后一个state。
+      state =next_state;
+      //if(reward != 0)over = true; //如果前进或者后退了，其实这一幕探索可以结束了，不用等到最后一个state。
     }
 
     show_table(16,4);
@@ -210,7 +210,7 @@ void setup() {
   sensor.startContinuous();
   //end vl350setup
   
-
+  train();
 }
 
 void loop() {

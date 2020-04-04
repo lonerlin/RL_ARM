@@ -10,7 +10,7 @@ class Arduino:
     def __init__(self, ip, port):
         self.ip = ip
         self.port = port
-        self.arduino = ClientSocket(ip,port,single_use=False)
+        self.arduino = ClientSocket(ip, port, single_use=False)
 
     def digitalWrite(self, pin, value):
         self.arduino.send("H,$dw, " + str(pin) + "," + str(value) + ", ")
