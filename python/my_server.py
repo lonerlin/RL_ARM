@@ -19,6 +19,7 @@ class Server(Thread):
     def run(self):
         self.sever.listen(1)
         client, client_address = self.sever.accept()
+        print("成功连接：{}".format(client_address))
         sd = Send(client, self.message)
         sd.start()
 

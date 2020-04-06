@@ -1,7 +1,9 @@
 #include <Servo.h>
 #include <Wire.h>
 #include <VL53L0X.h>
+#include <WiFiSerial.h>
 
+WiFiSerial wSerial(9600);
 VL53L0X sensor;
 
 float distance;
@@ -71,7 +73,7 @@ int epsilon_greedy_policy(int state){
 }
 
 float step(int action){
-  float reward;
+  
   switch (action)
       {
         case 0:
@@ -98,15 +100,17 @@ float step(int action){
 
       servo_move(s1,pre_s1_angle,s1_angle);
       servo_move(s2,pre_s2_angle,s2_angle);
-
-      //求动作后距离的变化，以变化值作为回报，向前正回报，向后负回报。
-      dist = get_distance();
-      diff = dist - pre_dist;
-      if(abs(diff)<10){diff=0;}             //减少误差到底有没有必有呢？
-      pre_dist = dist;
-      reward = map(diff/10,-5,5,-10,10);
-
-      return reward;
+      delay(150);
+}
+float get_reward(){
+  //求动作后距离的变化，以变化值作为回报，向前正回报，向后负回报。
+    float reward;
+    dist = get_distance();
+    diff = dist - pre_dist;
+    if(abs(diff)<10){diff=0;}             //减少误差到底有没有必有呢？
+    pre_dist = dist;
+    reward = map(diff/10,-5,5,-10,10);
+    return reward;
 }
 
 void train(){
@@ -124,13 +128,14 @@ void train(){
     servo_move(s1,pre_s1_angle,s1_angle);
     servo_move(s2,pre_s2_angle,s2_angle);
     int action;
-    while(state != 15 && !over){
+    while(state != goal && !over){
       pre_s1_angle = s1_angle;
       pre_s2_angle = s2_angle;
 
       action = epsilon_greedy_policy(state);//根据epsilon随机策略选择一个动作
 
-      reward = step(action); //执行选定的动作,改变状态,获取回报
+      step(action); //执行选定的动作,改变状态,获取回报
+      reward = get_reward();
 
       Serial.print(" episode=");Serial.print(i);
       Serial.print(" state=");Serial.print(state);
@@ -191,6 +196,62 @@ void servo_move(Servo servo,int start_angle,int end_angle){
   }
 }
 
+void pridict(int count)
+{
+  float tmp_value;
+  int tmp_a;
+  for(int i=0;i<count;i++){
+    state=0;
+    s1_angle = 40;
+    s2_angle = 0;
+    servo_move(s1,pre_s1_angle,s1_angle);
+    servo_move(s2,pre_s2_angle,s2_angle);
+    while(state != goal){
+      pre_s1_angle = s1_angle;
+      pre_s2_angle = s2_angle;
+      
+      tmp_value = -100;
+      for(int j=0;j<4;j++)
+      {
+        if(tmp_value < Q_table[state][j]){
+          tmp_value = Q_table[state][j];
+          tmp_a = j;
+        }
+      }
+      step(tmp_a);
+      state=next_state;
+    }
+
+  }
+}
+
+void MessageEvent(String order,int paraOne,int paraTwo)
+{
+    Serial.println("get even");
+    Serial.print("order:");
+    Serial.println(order);
+    if(order=="train")
+    {
+      if (paraOne>0)
+      {
+        episode=paraOne;
+      }else
+      {
+        episode=1;
+      }
+      train();
+    }
+    if(order=="pridict")
+    {
+      if(paraOne>0){
+        pridict(paraOne);
+      }else
+      {
+        pridict(1);
+      }
+      
+    }
+}
 
 void setup() {
   memset(Q_table,0,sizeof(Q_table));
@@ -200,6 +261,7 @@ void setup() {
   s1.write(0);
   s2.write(0);
   randomSeed(analogRead(0));//随机种子
+  delay(3000);
   show_table(16,4);
 
   //vl350setup
@@ -211,11 +273,13 @@ void setup() {
   }
   sensor.startContinuous();
   //end vl350setup
-  
-  train();
+  wSerial.Begin();
+  wSerial.setMessageEvent(MessageEvent);
+
+  //train();
 }
 
 void loop() {
   // put your main code here, to run repeatedly:
-
+  wSerial.SerialEvent();
 }
