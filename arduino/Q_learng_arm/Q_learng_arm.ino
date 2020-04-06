@@ -9,7 +9,7 @@ float Q_table[16][4];
 float epsilon = 0.1;
 float alpha = 1;
 float gamma = 0.9;
-int episode = 10;
+int episode = 5;
 int goal = 15;
 int s1_step = 20;
 int s2_step = 45;
@@ -104,7 +104,7 @@ float step(int action){
       diff = dist - pre_dist;
       if(abs(diff)<10){diff=0;}             //减少误差到底有没有必有呢？
       pre_dist = dist;
-      reward = map(diff,-4,4,-10,10);
+      reward = map(diff/10,-5,5,-10,10);
 
       return reward;
 }
@@ -155,9 +155,11 @@ void show_table(int row,int col){
   for(int i=0;i<row;i++){
     for(int j=0;j<col;j++){
       Serial.print(Q_table[i][j]);
-      Serial.print(" ");
+      Serial.print("  ");
     }
     Serial.println(" ");
+    if(i%4 == 0)delay(300);
+    
   }
 }
 
@@ -177,12 +179,12 @@ float get_distance(){
 
 void servo_move(Servo servo,int start_angle,int end_angle){
   if(start_angle<end_angle){
-    for(int i=start_angle;i<=end_angle;i++){
+    for(int i=start_angle;i<=end_angle;i=i+2){
       servo.write(i);
       delay(10);
     }
   }else{
-    for(int i=start_angle;i>=end_angle;i--){
+    for(int i=start_angle;i>=end_angle;i=i-2){
       servo.write(i);
       delay(10);
     }

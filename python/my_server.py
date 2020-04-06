@@ -4,6 +4,9 @@ from socket import AF_INET, socket, SOCK_STREAM
 from threading import Thread
 import tkinter
 from queue import Queue
+from io import BytesIO
+import time
+
 
 class Server(Thread):
     def __init__(self, que_message, host='192.168.0.174', port=9000, buf_size=1024):
@@ -18,9 +21,48 @@ class Server(Thread):
         client, client_address = self.sever.accept()
         sd = Send(client, self.message)
         sd.start()
-        while True:
-            ard_msg = client.recv(self.buf_size).decode("utf8")
-            msg_list.insert(tkinter.END, ard_msg)
+
+        # while True:
+        #     ard_msg = client.recv(self.buf_size).decode("utf8")
+        #     print(ard_msg)
+        #     msg_list.insert(tkinter.END, ard_msg)
+        #     msg_list.see(tkinter.END)
+
+        with BytesIO() as buffer:
+            while True:
+                try:
+                    resp = client.recv(1024)  # Read in some number of bytes -- balance this
+                except BlockingIOError:
+                    print("sleeping")  # Do whatever you want here, this just
+                    time.sleep(2)  # illustrates that it's nonblocking
+                else:
+                    buffer.write(resp)  # Write to the BytesIO object
+                    buffer.seek(0)  # Set the file pointer to the SoF
+                    start_index = 0  # Count the number of characters processed
+                    for line in buffer:
+                        start_index += len(line)
+                        #handle_line(line)  # Do something with your line
+                        print(line)
+                        msg_list.insert(tkinter.END, line)
+                        msg_list.see(tkinter.END)
+
+
+                    """ If we received any newline-terminated lines, this will be nonzero.
+                        In that case, we read the remaining bytes into memory, truncate
+                        the BytesIO object, reset the file pointer and re-write the
+                        remaining bytes back into it.  This will advance the file pointer
+                        appropriately.  If start_index is zero, the buffer doesn't contain
+                        any newline-terminated lines, so we set the file pointer to the
+                        end of the file to not overwrite bytes.
+                    """
+                    if start_index:
+                        buffer.seek(start_index)
+                        remaining = buffer.read()
+                        buffer.truncate(0)
+                        buffer.seek(0)
+                        buffer.write(remaining)
+                    else:
+                        buffer.seek(0, 2)
 
 
 class Send(Thread):

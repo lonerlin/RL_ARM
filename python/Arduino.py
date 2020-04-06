@@ -1,4 +1,4 @@
-from clientsocket import *
+
 
 class Arduino:
     '''
@@ -7,24 +7,26 @@ class Arduino:
     '''
 
     #指定Arduino WiFi扩展板的IP地址和端口
-    def __init__(self,ip,port):
-        self.ip=ip
-        self.port=port
-        self.arduino=ClientSocket(ip,port,single_use=False)
+    def __init__(self, que_message):
 
-    def digitalWrite(self,pin,value):
-        self.arduino.send("H,$dw, " + str(pin) + ","+ str(value) + ", ")
+        self.message = que_message
+
+    def digitalWrite(self, pin, value):
+        self.message.put("H,$dw, " + str(pin) + "," + str(value) + ", ")
         return None
     def digitalRead(self,pin):
-        return self.arduino.send("H,$dr," + str(pin) + ",0,").decode('utf-8').split(',')[3]
+       pass
+       # return self.arduino.send("H,$dr," + str(pin) + ",0,").decode('utf-8').split(',')[3]
 
-    def analogWrite(self,pin,value):
-       self.arduino.send("H,$aw, " + str(pin) + "," + str(value) + ", ")
-       return None
-    def analogRead(self,pin):
-        value= self.arduino.send("H,$ar," + str(pin) + ",0,").decode('utf-8').split(',')
-        return  value[3]
+    def analogWrite(self, pin, value):
+        self.message.add("H,$aw, " + str(pin) + "," + str(value) + ", ")
+        return None
+
+    def analogRead(self, pin):
+        pass
+        #value = self.arduino.send("H,$ar," + str(pin) + ",0,").decode('utf-8').split(',')
+        #return value[3]
 
     #向Arduino发送自定义消息。
-    def sendMessage(self,Order,ParaOne,ParaTwo):
-        return self.arduino.send("H,"+ Order +"," + str(ParaOne) +"," + str(ParaTwo) +",").decode('utf-8').split(',')
+    def sendMessage(self, Order, ParaOne, ParaTwo):
+        self.message.put("H," + Order + "," + str(ParaOne) + "," + str(ParaTwo) + ",").decode('utf-8').split(',')
