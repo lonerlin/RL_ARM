@@ -181,12 +181,12 @@ void servo_move(Servo servo,int start_angle,int end_angle){
   if(start_angle<end_angle){
     for(int i=start_angle;i<=end_angle;i=i+2){
       servo.write(i);
-      delay(10);
+      delay(20);
     }
   }else{
     for(int i=start_angle;i>=end_angle;i=i-2){
       servo.write(i);
-      delay(10);
+      delay(15);
     }
   }
 }
