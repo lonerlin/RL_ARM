@@ -14,7 +14,7 @@ float gamma = 0.9;
 int episode = 5;
 int goal = 15;
 int s1_step = 20;
-int s2_step = 45;
+int s2_step = 60;
 int s1_angle = 40;
 int s2_angle = 0;
 int pre_s1_angle;
@@ -88,11 +88,11 @@ float step(int action){
           break;
         case 2:
           next_state = state + 1;
-          s2_angle += 45;
+          s2_angle += s2_step;
           break;
         case 3:
           next_state = state -1;
-          s2_angle -= 45;
+          s2_angle -= s2_step;
           break;
         default:
           break;
@@ -107,7 +107,7 @@ float get_reward(){
     float reward;
     dist = get_distance();
     diff = dist - pre_dist;
-    if(abs(diff)<10){diff=0;}             //减少误差到底有没有必有呢？
+    if(abs(diff)<19){diff=0;}             //减少误差到底有没有必有呢？
     pre_dist = dist;
     reward = map(diff/10,-5,5,-10,10);
     return reward;
@@ -147,6 +147,7 @@ void train(){
       //根据Q_learning公式，更新Q_table并转移到下一个转台
       Q_table[state][action] += alpha * (reward + gamma * calc_max_Q(next_state) - Q_table[state][action] );
       state =next_state;
+       
       //if(reward != 0)over = true; //如果前进或者后退了，其实这一幕探索可以结束了，不用等到最后一个state。
     }
 
@@ -196,7 +197,7 @@ void servo_move(Servo servo,int start_angle,int end_angle){
   }
 }
 
-void pridict(int count)
+void predict(int count)
 {
   float tmp_value;
   int tmp_a;
@@ -241,13 +242,13 @@ void MessageEvent(String order,int paraOne,int paraTwo)
       }
       train();
     }
-    if(order=="pridict")
+    if(order=="predict")
     {
       if(paraOne>0){
-        pridict(paraOne);
+        predict(paraOne);
       }else
       {
-        pridict(1);
+        predict(1);
       }
       
     }
@@ -261,7 +262,7 @@ void setup() {
   s1.write(0);
   s2.write(0);
   randomSeed(analogRead(0));//随机种子
-  delay(3000);
+  delay(4000);//等待WIFI连接
   show_table(16,4);
 
   //vl350setup
