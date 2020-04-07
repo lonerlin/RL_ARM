@@ -13,10 +13,12 @@ float alpha = 1;
 float gamma = 0.9;
 int episode = 5;
 int goal = 15;
-int s1_step = 20;
-int s2_step = 60;
-int s1_angle = 40;
-int s2_angle = 0;
+int s1_angle_ini=0;
+int s2_angle_ini=0;
+int s1_step = 10;
+int s2_step = 40;
+int s1_angle = 15;
+int s2_angle = 20;
 int pre_s1_angle;
 int pre_s2_angle; 
 int state,next_state;
@@ -109,7 +111,7 @@ float get_reward(){
     diff = dist - pre_dist;
     if(abs(diff)<19){diff=0;}             //减少误差到底有没有必有呢？
     pre_dist = dist;
-    reward = map(diff/10,-5,5,-10,10);
+    reward = map(diff/10,-8,8,-10,10);
     return reward;
 }
 
@@ -117,6 +119,8 @@ void train(){
   
   float reward;
   pre_dist = get_distance();
+  s1_angle=s1_angle_ini;
+  s2_angle=s2_angle_ini;
   pre_s1_angle = s1.read();
   pre_s2_angle = s2.read();
   
@@ -153,6 +157,8 @@ void train(){
 
     show_table(16,4);
   }
+  servo_move(s1, pre_s1_angle, 20);
+  servo_move(s2, pre_s2_angle, 0);
 }
 
 
@@ -241,6 +247,7 @@ void MessageEvent(String order,int paraOne,int paraTwo)
         episode=1;
       }
       train();
+      Serial.println("train finish!");
     }
     if(order=="predict")
     {
@@ -250,7 +257,29 @@ void MessageEvent(String order,int paraOne,int paraTwo)
       {
         predict(1);
       }
-      
+    }
+    if(order=="step")
+    {
+      s1_step=paraOne;
+      s2_step=paraTwo;
+      Serial.print("step:");
+      Serial.print(s1_step);
+      Serial.print(" ");
+      Serial.println(s2_step);
+    }
+    if(order=="init")
+    {
+      s1_angle_ini=paraOne;
+      s2_angle_ini=paraTwo;
+      Serial.print("init:");
+      Serial.print(s1_angle_ini);
+      Serial.print(" ");
+      Serial.println(s2_angle_ini);
+    }
+    if(order=="clear")
+    {
+       memset(Q_table,0,sizeof(Q_table));
+       Serial.println("clear Q_Table!");
     }
 }
 

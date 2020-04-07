@@ -9,7 +9,7 @@ import time
 
 
 class Server(Thread):
-    def __init__(self, que_message, host='192.168.1.103', port=9000, buf_size=1024):
+    def __init__(self, que_message, host='192.168.0.174', port=9000, buf_size=1024):
         Thread.__init__(self)
         self.message = que_message
         self.sever = socket(AF_INET, SOCK_STREAM)
